@@ -1,4 +1,4 @@
-""" 
+"""
 Remember to parameterize the file paths eventually
 """
 import torch
@@ -16,6 +16,9 @@ except ImportError:
 import os
 import glob
 
+from .pli_datasets import PliNpzDataset
+from .cyl_datasets import CylNpzDataset
+
 broken_paths = []
 # IF YOU ADD A NEW DSET MAKE SURE TO UPDATE THIS MAPPING SO MIXED DSET KNOWS HOW TO USE IT
 DSET_NAME_TO_OBJECT = {
@@ -23,12 +26,15 @@ DSET_NAME_TO_OBJECT = {
             'incompNS': IncompNSDataset,
             'diffre2d': DiffRe2DDataset,
             'compNS': CompNSDataset,
+            'pli_npz': PliNpzDataset,
+            'cyl_npz': CylNpzDataset,
             }
+
 
 def get_data_loader(params, paths, distributed, split='train', rank=0, train_offset=0):
     # paths, types, include_string = zip(*paths)
     dataset = MixedDataset(paths, n_steps=params.n_steps, train_val_test=params.train_val_test, split=split,
-                            tie_fields=params.tie_fields, use_all_fields=params.use_all_fields, enforce_max_steps=params.enforce_max_steps, 
+                            tie_fields=params.tie_fields, use_all_fields=params.use_all_fields, enforce_max_steps=params.enforce_max_steps,
                             train_offset=train_offset)
     # dataset = IncompNSDataset(paths[0], n_steps=params.n_steps, train_val_test=params.train_val_test, split=split)
     seed = torch.random.seed() if 'train'==split else 0
@@ -37,7 +43,7 @@ def get_data_loader(params, paths, distributed, split='train', rank=0, train_off
     else:
         base_sampler = RandomSampler
     sampler = MultisetSampler(dataset, base_sampler, params.batch_size,
-                               distributed=distributed, max_samples=params.epoch_size, 
+                               distributed=distributed, max_samples=params.epoch_size,
                                rank=rank)
     # sampler = DistributedSampler(dataset) if distributed else None
     dataloader = DataLoader(dataset,
@@ -48,14 +54,14 @@ def get_data_loader(params, paths, distributed, split='train', rank=0, train_off
                             drop_last=True,
                             pin_memory=torch.cuda.is_available())
     return dataloader, dataset, sampler
-    
+
 
 class MixedDataset(Dataset):
     def __init__(self, path_list=[], n_steps=1, dt=1, train_val_test=(.8, .1, .1),
-                  split='train', tie_fields=True, use_all_fields=True, extended_names=False, 
+                  split='train', tie_fields=True, use_all_fields=True, extended_names=False,
                   enforce_max_steps=False, train_offset=0):
         super().__init__()
-        # Global dicts used by Mixed DSET. 
+        # Global dicts used by Mixed DSET.
         self.train_offset = train_offset
         self.path_list, self.type_list, self.include_string = zip(*path_list)
         self.tie_fields = tie_fields
@@ -103,7 +109,9 @@ class MixedDataset(Dataset):
                         'swe': [3],
                         'incompNS': [0, 1, 2],
                         'compNS': [0, 1, 2, 3],
-                        'diffre2d': [4, 5]
+                        'diffre2d': [4, 5],
+                        'pli_npz': [0, 1, 2, 3, 4, 5, 6, 7],
+                'cyl_npz': [0, 1, 2, 3],
                         }
         elif self.use_all_fields:
             cur_max = 0
@@ -123,14 +131,46 @@ class MixedDataset(Dataset):
         return subset_dict
 
     def __getitem__(self, index):
-        file_idx = np.searchsorted(self.offsets, index, side='right')-1 #which dataset are we are on
+        # which dataset are we are on
+        file_idx = np.searchsorted(self.offsets, index, side='right')-1
         local_idx = index - max(self.offsets[file_idx], 0)
         try:
             x, bcs, y = self.sub_dsets[file_idx][local_idx]
-        except:
-            print('FAILED AT ', file_idx, local_idx, index,int(os.environ.get("RANK", 0)))
-            thisvariabledoesntexist
-        return x, file_idx, torch.tensor(self.subset_dict[self.sub_dsets[file_idx].get_name()]), bcs, y
-    
+
+            # --- Guard: skip non-finite samples (NaN/Inf) ---
+            # Keep behavior minimal: if bad, trigger the existing dummy-return path by raising IndexError.
+            xt = torch.as_tensor(x) if isinstance(x, np.ndarray) else x
+            yt = torch.as_tensor(y) if isinstance(y, np.ndarray) else y
+            bt = torch.as_tensor(bcs) if isinstance(bcs, np.ndarray) else bcs
+
+            if (not torch.isfinite(xt).all()) or (not torch.isfinite(yt).all()) or (not torch.isfinite(bt).all()):
+                print(f"[SKIP] Non-finite values at index={index} (file_idx={file_idx}, local_idx={local_idx})")
+                raise IndexError("Skipping non-finite sample")
+            # --- end guard ---
+
+        except IndexError as e:
+            print(f"[SKIP] IndexError in MixedDataset at index={index}: {e}")
+            # Return dummy tensors instead of raising
+            # Replace 8 with num_fields
+            # CHANGE: use the dataset's actual number of fields (e.g., CYL can be 4 now, PLI can be 8)
+            num_fields = len(self.sub_dsets[file_idx].field_names)
+
+            dummy_x = torch.zeros(
+                (self.sub_dsets[file_idx].n_steps, num_fields, 560, 192))
+            dummy_bcs = torch.zeros(2)
+            # CHANGE: match target tensor channels to num_fields as well
+            dummy_y = torch.zeros((num_fields, 560, 192))
+            subset_tensor = torch.tensor(
+                self.subset_dict[self.sub_dsets[file_idx].get_name()])
+            return dummy_x, file_idx, subset_tensor, dummy_bcs, dummy_y
+
+        except Exception as e:
+            print(f"[SKIP] Unexpected error at index={index}: {e}")
+            raise IndexError(f"Skipping index={index} due to dataset error")
+        if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+            return x, file_idx, torch.tensor(self.subset_dict[self.sub_dsets[file_idx].get_name()]), bcs.float(), y
+        else:
+            return x.float(), file_idx, torch.tensor(self.subset_dict[self.sub_dsets[file_idx].get_name()]), bcs.float(), y.float()
+
     def __len__(self):
         return sum([len(dset) for dset in self.sub_dsets])
