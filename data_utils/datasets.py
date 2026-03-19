@@ -111,7 +111,7 @@ class MixedDataset(Dataset):
                         'compNS': [0, 1, 2, 3],
                         'diffre2d': [4, 5],
                         'pli_npz': [0, 1, 2, 3, 4, 5, 6, 7],
-                'cyl_npz': [0, 1, 2, 3],
+                        'cyl_npz': [0, 1, 2, 3],
                         }
         elif self.use_all_fields:
             cur_max = 0
