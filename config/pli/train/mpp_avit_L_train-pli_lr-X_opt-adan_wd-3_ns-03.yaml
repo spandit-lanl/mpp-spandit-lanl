@@ -10,7 +10,7 @@ basic_config: &basic_config
   enable_amp: !!bool False # Use automatic mixed precision - blows up with low variance fields right now
   compile: !!bool False # Compile model - Does not currently work
   gradient_checkpointing: !!bool False # Whether to use gradient checkpointing - Slow, but lower memory
-  exp_dir: './final/dtrain_lsc' # Output path
+  exp_dir: './mpp_runs/train_pli' # Output path
   log_interval: 1 # How often to log - Don't think this is actually implemented
   pretrained: !!bool False # Whether to load a pretrained model
   # wandb settings
@@ -54,10 +54,10 @@ basic_config: &basic_config
   extended_names: !!bool False # Whether to use extended names - not currently implemented
   embedding_offset: 0  # Use when adding extra finetuning fields
   train_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'lsc_npz', ''],
+              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
               ]
   valid_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'lsc_npz', ''],
+              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
               ]
   append_datasets: [] # List of datasets to append to the input/output projections for finetuning
 
@@ -70,15 +70,15 @@ finetune: &finetune
   group: 'debugging'
   pretrained_ckpt_path: './dummy_path'
   train_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'lsc_npz', ''],
+              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
               ]
   valid_data_paths: [  # These are the same for all configs - uses split according to train_val_test
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'lsc_npz', ''],
+              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
               ]
   embedding_offset: 12 # Number of fields in original model - FT fields start after this
   freeze_middle: !!bool False # Whether to freeze the middle layers of the model
   freeze_processor: !!bool False
-  append_datasets: ['lsc_npz'] # List of datasets to append to the input/output projections for finetuning
+  append_datasets: ['pli_npz'] # List of datasets to append to the input/output projections for finetuning
 
 
 finetune_resume: &finetune_resume

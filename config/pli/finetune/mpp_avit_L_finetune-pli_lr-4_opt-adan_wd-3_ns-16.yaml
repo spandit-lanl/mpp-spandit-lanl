@@ -10,7 +10,7 @@ basic_config: &basic_config
   enable_amp: !!bool False # Use automatic mixed precision - blows up with low variance fields right now
   compile: !!bool False # Compile model - Does not currently work
   gradient_checkpointing: !!bool False # Whether to use gradient checkpointing - Slow, but lower memory
-  exp_dir: './final/finetune_lsc' # Output path
+  exp_dir: './mpp_runs/finetune_pli' # Output path
   log_interval: 1 # How often to log - Don't think this is actually implemented
   pretrained: !!bool False # Whether to load a pretrained model
   # wandb settings
@@ -80,15 +80,15 @@ finetune: &finetune
   group: 'debugging'
   pretrained_ckpt_path: 'mpp_runs/basic_config/L_pdebench_lr-X_opt-adan_wd-3_ns-16/training_checkpoints/best_ckpt.tar'
   train_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_finetune_train', 'lsc_npz', ''],
+              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_finetune_train', 'pli_npz', ''],
               ]
   valid_data_paths: [  # These are the same for all configs - uses split according to train_val_test
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_finetune_train', 'lsc_npz', ''],
+              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_finetune_train', 'pli_npz', ''],
               ]
   embedding_offset: 12 # Number of fields in original model - FT fields start after this
   freeze_middle: !!bool False # Whether to freeze the middle layers of the model
   freeze_processor: !!bool False
-  append_datasets: ['lsc_npz'] # List of datasets to append to the input/output projections for finetuning
+  append_datasets: ['pli_npz'] # List of datasets to append to the input/output projections for finetuning
 
 
 finetune_resume: &finetune_resume
@@ -97,7 +97,7 @@ finetune_resume: &finetune_resume
   # Resume finetuning from the last finetune checkpoint (training_checkpoints/best_ckpt.tar) in the run directory.
   # IMPORTANT: use the SAME --run_name as the prior finetune run so best_ckpt.tar exists and resuming=True.
 
-  n_states: 20  # 12 (basic_config) + 8 (LSC appended fields) after expansion in the initial finetune run
+  n_states: 20  # 12 (basic_config) + 8 (PLI appended fields) after expansion in the initial finetune run
   pretrained: !!bool False  # prevent falling back to the 12-state pretrained_ckpt_path if best_ckpt.tar is missing
   append_datasets: []  # already expanded in the initial finetune run; avoid expanding twice on resume
 
