@@ -17,7 +17,7 @@ class MultisetSampler(Sampler[T_co]):
                  rank=0, distributed=True) -> None:
         self.batch_size = batch_size
         self.sub_dsets = dataset.sub_dsets
-        if distributed: 
+        if distributed:
             self.sub_samplers = [base_sampler(dataset, drop_last=drop_last) for dataset in self.sub_dsets]
         else:
             self.sub_samplers = [base_sampler(dataset) for dataset in self.sub_dsets]
@@ -55,7 +55,7 @@ class MultisetSampler(Sampler[T_co]):
                 continue
             if count >= self.max_samples:
                 break
-    
+
     def __len__(self) -> int:
         return len(self.dataset)
 
