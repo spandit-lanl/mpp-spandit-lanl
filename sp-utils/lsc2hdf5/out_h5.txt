@@ -1,0 +1,18 @@
+File: input.h5
+- Dataset: Vx | shape: (10000, 21, 128, 128) | dtype: float32
+- Dataset: Vy | shape: (10000, 21, 128, 128) | dtype: float32
+- Dataset: density | shape: (10000, 21, 128, 128) | dtype: float32
+- Dataset: pressure | shape: (10000, 21, 128, 128) | dtype: float32
+- Dataset: t-coordinate | shape: (22,) | dtype: float32
+- Dataset: x-coordinate | shape: (128,) | dtype: float32
+- Dataset: y-coordinate | shape: (128,) | dtype: float32
+t-coordinate: shape = (22,), dtype = float32
+  min = 0.0, max = 1.0500000715255737, mean spacing ≈ 0.0500000034059797
+
+x-coordinate: shape = (128,), dtype = float32
+  min = 0.00390625, max = 0.99609375, mean spacing ≈ 0.0078125
+
+y-coordinate: shape = (128,), dtype = float32
+  min = 0.00390625, max = 0.99609375, mean spacing ≈ 0.0078125
+
+[Dataset] Vx: shape=(10000, 21, 128, 128), dtype=float32

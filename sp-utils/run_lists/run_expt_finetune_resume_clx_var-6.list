@@ -1,0 +1,8 @@
+python train_basic.py --run_name clx_expt_ns-01_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_01_var_6.yaml &>> final/clx_expt_ns-01_var-6.log
+python train_basic.py --run_name clx_expt_ns-02_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_02_var_6.yaml &>> final/clx_expt_ns-02_var-6.log
+python train_basic.py --run_name clx_expt_ns-03_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_03_var_6.yaml &>> final/clx_expt_ns-03_var-6.log
+python train_basic.py --run_name clx_expt_ns-04_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_04_var_6.yaml &>> final/clx_expt_ns-04_var-6.log
+python train_basic.py --run_name clx_expt_ns-05_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_05_var_6.yaml &>> final/clx_expt_ns-05_var-6.log
+python train_basic.py --run_name clx_expt_ns-06_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_06_var_6.yaml &>> final/clx_expt_ns-06_var-6.log
+python train_basic.py --run_name clx_expt_ns-07_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_07_var_6.yaml &>> final/clx_expt_ns-07_var-6.log
+python train_basic.py --run_name clx_expt_ns-08_var-6 --config finetune_resume --yaml_config config/finetune_clx/expt/mpp_avit_L_clx_08_var_6.yaml &>> final/clx_expt_ns-08_var-6.log
