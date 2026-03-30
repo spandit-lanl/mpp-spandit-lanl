@@ -19,7 +19,7 @@ basic_config: &basic_config
   entity: 'entity'
   # Training settings
   drop_path: 0.05
-  batch_size: 4
+  batch_size: 1
   max_epochs: 1500
   scheduler_epochs: -1
   epoch_size: 2000 # Artificial epoch size
@@ -34,7 +34,7 @@ basic_config: &basic_config
   dt: 1 # Striding of data - Not currently implemented > 1
   n_steps: 14 # Length of history to include in input
   enforce_max_steps: !!bool False # If false and n_steps > dataset steps, use dataset steps. Otherwise, raise Exception.
-  accum_grad: 4  # Real batch size is accum * batch_size, real steps/"epoch" is epoch_size / accum  # Model settings
+  accum_grad: 16  # Real batch size is accum * batch_size, real steps/"epoch" is epoch_size / accum  # Model settings
   model_type: 'avit' # Only option so far
   block_type: 'axial' # Which type of block to use - if axial, next two fields must be set to define axial ops
   time_type: 'attention' # Conditional on block type
