@@ -6,19 +6,21 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-IMAGE_WIDTH_HALF_IMAGE = 560
-IMAGE_WIDTH_FULL_IMAGE = 1120
+'''
+IMAGE_WIDTH_HALF_IMAGE = 200
+IMAGE_WIDTH_FULL_IMAGE = 400
 
 PATCH_SIZE = 16
-IMAGE_HEIGHT_RAW = 400
+IMAGE_HEIGHT_RAW = 1120
 IMAGE_HEIGHT_CROPPED = (IMAGE_HEIGHT_RAW // PATCH_SIZE) * PATCH_SIZE
 IMAGE_HEIGHT_PADDED  = ((IMAGE_HEIGHT_RAW // PATCH_SIZE) + 1) * PATCH_SIZE
 
-IMAGE_WIDTH = IMAGE_WIDTH_HALF_IMAGE
-IMAGE_WIDTH = IMAGE_WIDTH_FULL_IMAGE
+#IMAGE_WIDTH = IMAGE_WIDTH_FULL_IMAGE
+#IMAGE_HEIGHT = IMAGE_HEIGHT_PADDED
+'''
 
-IMAGE_HEIGHT = IMAGE_HEIGHT_PADDED
-IMAGE_HEIGHT = IMAGE_HEIGHT_CROPPED
+IMAGE_WIDTH = 400
+IMAGE_HEIGHT = 1120
 
 class PliNpzDataset(Dataset):
     def __init__(self,
@@ -83,6 +85,7 @@ class PliNpzDataset(Dataset):
                             raise KeyError(f"Missing field '{key}' in file {fpath}")
                             return None
                         arr = data[key]
+                        #print(f"DEBUG: {key} raw shape: {arr.shape}")
                         arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
                         arr = arr.astype(np.float32)
                         #arr = arr.astype(np.float16)  # load fp16 from disk (Option A); convert to fp32 when making torch tensor
@@ -90,7 +93,8 @@ class PliNpzDataset(Dataset):
                             print(f"[SKIP] {key} in {fpath} is not 2D")
                             return None
                         arrays.append(arr)
-                    stacked = np.stack(arrays, axis=0)[:, :IMAGE_WIDTH, :IMAGE_HEIGHT]
+                    #stacked = np.stack(arrays, axis=0)[:, :IMAGE_HEIGHT, :IMAGE_WIDTH]
+                    print(f"DEBUG: stacked shape after crop: {stacked.shape}")
                     t = torch.tensor(stacked, dtype=torch.float32)
 
                     # Tripwire: catch non-finite values early + tell us which file/field triggered it
