@@ -20,7 +20,7 @@ basic_config: &basic_config
   # Training settings
   drop_path: 0.05
   batch_size: 4
-  max_epochs: 1000
+  max_epochs: 1500
   scheduler_epochs: -1
   epoch_size: 2000 # Artificial epoch size
   rescale_gradients: !!bool True # Activate hook that scales block gradients to norm 1
@@ -65,12 +65,12 @@ finetune: &finetune
   pretrained: !!bool True
   append_datasets: ['cyl_npz'] # List of datasets to append to the input/output projections for finetuning
   embedding_offset: 12 # Number of fields in original model
-  pretrained_ckpt_path: '/lustre/scratch5/exempt/artimis/spandit/MPP/mpp-pretrained-weights/MPP_AViT_L'
+  pretrained_ckpt_path: './pretrained_ckpt/MPP_AViT_L.pt'
   train_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/spandit/data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
+              ['./data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
               ]
   valid_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/spandit/data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
+              ['./data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
               ]
   freeze_middle: !!bool False # Whether to freeze the middle layers of the model
   freeze_processor: !!bool False
