@@ -10,7 +10,7 @@ basic_config: &basic_config
   enable_amp: !!bool False # Use automatic mixed precision - blows up with low variance fields right now
   compile: !!bool False # Compile model - Does not currently work
   gradient_checkpointing: !!bool False # Whether to use gradient checkpointing - Slow, but lower memory
-  exp_dir: './runs/cyl-finetune' # Output path
+  exp_dir: '../runs/cyl-finetune' # Output path
   log_interval: 1 # How often to log - Don't think this is actually implemented
   pretrained: !!bool False # Whether to load a pretrained model
   # wandb settings
@@ -67,10 +67,10 @@ finetune: &finetune
   embedding_offset: 12 # Number of fields in original model
   pretrained_ckpt_path: './pretrained_ckpt/MPP_AViT_L.pt'
   train_data_paths: [
-              ['./data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
+              ['../data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
               ]
   valid_data_paths: [
-              ['./data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
+              ['../data/cyl-finetune-fp-full/cx241203_train', 'cyl_npz', ''],
               ]
   freeze_middle: !!bool False # Whether to freeze the middle layers of the model
   freeze_processor: !!bool False
