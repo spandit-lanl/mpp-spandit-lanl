@@ -65,7 +65,7 @@ finetune: &finetune
   pretrained: !!bool True
   append_datasets: ['cyl_npz'] # List of datasets to append to the input/output projections for finetuning
   embedding_offset: 12 # Number of fields in original model
-  pretrained_ckpt_path: './pretrained_ckpt/MPP_AViT_L.pt'
+  pretrained_ckpt_path: '../pretrained_weights/MPP_AViT_L.pt'
   train_data_paths: [
               ['../data/cyl_finetune_fp16_full/cx241203_train', 'cyl_npz', ''],
               ]

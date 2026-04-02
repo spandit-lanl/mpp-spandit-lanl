@@ -93,8 +93,8 @@ class PliNpzDataset(Dataset):
                             print(f"[SKIP] {key} in {fpath} is not 2D")
                             return None
                         arrays.append(arr)
-                    #stacked = np.stack(arrays, axis=0)[:, :IMAGE_HEIGHT, :IMAGE_WIDTH]
-                    print(f"DEBUG: stacked shape after crop: {stacked.shape}")
+                    stacked = np.stack(arrays, axis=0)[:, :IMAGE_HEIGHT, :IMAGE_WIDTH]
+                    #print(f"DEBUG: stacked shape after crop: {stacked.shape}")
                     t = torch.tensor(stacked, dtype=torch.float32)
 
                     # Tripwire: catch non-finite values early + tell us which file/field triggered it
