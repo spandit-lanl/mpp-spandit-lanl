@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 
 
 FILENAME_RE = re.compile(
-    r"^out_(?P<dataset>cyl|pli)-(?P<experiment_id>[^_]+)_(?P<image_size>full|half)_ns(?P<context>\d{2})\.log$"
+    r"^out_(?P<dataset>cyl|pli)_(?P<experiment_id>[^_]+)_(?P<image_size>full|half)_ns(?P<context>\d{2})\.log$"
 )
 
 LOSS_LINE_RE = re.compile(
@@ -277,7 +277,7 @@ def plot_group(
     fig.suptitle(make_suptitle(dataset, experiment_id, image_size), fontsize=14)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
 
-    output_path = output_dir / f"plot_{dataset}-{experiment_id}_{image_size}.pdf"
+    output_path = output_dir / f"plot_{dataset}_{experiment_id}_{image_size}.pdf"
     fig.savefig(output_path, format="pdf", bbox_inches="tight")
     plt.close(fig)
 
