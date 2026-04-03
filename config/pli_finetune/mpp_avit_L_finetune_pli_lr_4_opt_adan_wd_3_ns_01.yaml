@@ -80,7 +80,7 @@ finetune: &finetune
 finetune_resume: &finetune_resume
   <<: *finetune
   pretrained: !!bool False  # prevent falling back to the 12-state pretrained_ckpt_path if ckpt.tar is missing
-  n_states: 16  # 12 (basic_config) + 8 (CYL appended fields) after expansion in the initial finetune run
+  n_states: 20  # 12 (basic_config) + 8 (CYL appended fields) after expansion in the initial finetune run
   append_datasets: []  # already expanded in the initial finetune run; avoid expanding twice on resume
 
 frozen: &frozen
