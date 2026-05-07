@@ -10,7 +10,7 @@ basic_config: &basic_config
   enable_amp: !!bool False # Use automatic mixed precision - blows up with low variance fields right now
   compile: !!bool False # Compile model - Does not currently work
   gradient_checkpointing: !!bool False # Whether to use gradient checkpointing - Slow, but lower memory
-  exp_dir: '../runs/pli_finetune' # Output path
+  exp_dir: '/users/spandit/runs/mpp/finetune_pli' # Output path
   log_interval: 1 # How often to log - Don't think this is actually implemented
   pretrained: !!bool False # Whether to load a pretrained model
   # wandb settings
@@ -18,23 +18,24 @@ basic_config: &basic_config
   group: 'debugging'
   entity: 'entity'
   # Training settings
-  drop_path: 0.05
-  batch_size: 4
-  max_epochs: 1500
+  drop_path: 0.1
+  batch_size: 1
+  max_epochs: 2000
   scheduler_epochs: -1
-  epoch_size: 2000 # Artificial epoch size
-  rescale_gradients: !!bool True # Activate hook that scales block gradients to norm 1
+  epoch_size: 1000 # Artificial epoch size
+  rescale_gradients: !!bool False # Activate hook that scales block gradients to norm 1
   optimizer: 'adan' # adam, adan, whatever else i end up adding - adan did better on HP sweep
   scheduler: 'cosine' # Only cosine implemented
   warmup_steps: 1000 # Warmup when not using DAdapt
-  learning_rate: 1e-4 # -1 means use DAdapt
-  weight_decay: 1e-3
-  n_states: 12  # Number of state variables across the datasets - Can be larger than real number and things will just go unused
+  learning_rate: -1  # -1 means use DAdapt
+  weight_decay: 1e-4
+  n_states: 12   # Number of state variables across the datasets - Can be larger than real number and things will just go unused
   state_names: ['Pressure', 'Vx', 'Vy', 'Density',  'Vx', 'Vy', 'Density', 'Pressure'] # Should be sorted
   dt: 1 # Striding of data - Not currently implemented > 1
   n_steps: 1 # Length of history to include in input
   enforce_max_steps: !!bool False # If false and n_steps > dataset steps, use dataset steps. Otherwise, raise Exception.
-  accum_grad: 4  # Real batch size is accum * batch_size, real steps/"epoch" is epoch_size / accum  # Model settings
+  accum_grad: 5  # Real batch size is accum * batch_size, real steps/"epoch" is epoch_size / accum
+  # Model settings
   model_type: 'avit' # Only option so far
   block_type: 'axial' # Which type of block to use - if axial, next two fields must be set to define axial ops
   time_type: 'attention' # Conditional on block type
@@ -53,8 +54,10 @@ basic_config: &basic_config
   extended_names: !!bool False # Whether to use extended names - not currently implemented
   embedding_offset: 0  # Use when adding extra finetuning fields
   train_data_paths: [
+              ['/users/spandit/data/lsc240420', 'lsc_npz_rho2rho', '/users/spandit/data/lsc240420_prefixes.txt'],
               ]
   valid_data_paths: [
+              ['/users/spandit/data/lsc240420', 'lsc_npz_rho2rho', '/users/spandit/data/lsc240420_prefixes.txt'],
               ]
   append_datasets: [] # List of datasets to append to the input/output projections for finetuning
 
@@ -63,14 +66,14 @@ basic_config: &basic_config
 finetune: &finetune
   <<: *basic_config
   pretrained: !!bool True
-  append_datasets: ['pli_npz'] # List of datasets to append to the input/output projections for finetuning
+  append_datasets: ['lsc_npz_rho2rho'] # List of datasets to append to the input/output projections for finetuning
   embedding_offset: 12 # Number of fields in original model
-  pretrained_ckpt_path: '../pretrained_weights/MPP_AViT_L.pt'
+  pretrained_ckpt_path: '../mpp-pretrained_weights/MPP_AViT_L.pt'
   train_data_paths: [
-              ['../data/pli_finetune_fp16_full/lsc240420_train', 'pli_npz', ''],
+              ['/users/spandit/data/lsc240420', 'lsc_npz_rho2rho', '/users/spandit/data/lsc240420_prefixes.txt'],
               ]
   valid_data_paths: [
-              ['../data/pli_finetune_fp16_full/lsc240420_train', 'pli_npz', ''],
+              ['/users/spandit/data/lsc240420', 'lsc_npz_rho2rho', '/users/spandit/data/lsc240420_prefixes.txt'],
               ]
   freeze_middle: !!bool False # Whether to freeze the middle layers of the model
   freeze_processor: !!bool False
@@ -79,9 +82,14 @@ finetune: &finetune
 #  IMPORTANT: use the SAME --run_name as the prior finetune run so ckpt.tar exists and resuming=True.
 finetune_resume: &finetune_resume
   <<: *finetune
+
+  # Resume finetuning from the last finetune checkpoint (training_checkpoints/ckpt.tar) in the run directory.
+  # IMPORTANT: use the SAME --run_name as the prior finetune run so ckpt.tar exists and resuming=True.
+
+  n_states: 20  # 12 (pretrain) + 8 (Finetune data appended fields) after expansion in the initial finetune run
   pretrained: !!bool False  # prevent falling back to the 12-state pretrained_ckpt_path if ckpt.tar is missing
-  n_states: 20  # 12 (basic_config) + 8 (CYL appended fields) after expansion in the initial finetune run
   append_datasets: []  # already expanded in the initial finetune run; avoid expanding twice on resume
+
 
 frozen: &frozen
   <<: *finetune

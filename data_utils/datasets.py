@@ -16,9 +16,8 @@ except ImportError:
 import os
 import glob
 
-from .pli_datasets import PliNpzDataset
 from .cyl_datasets import CylNpzDataset
-
+from .pli_datasets import PliNpzDataset, LscRho2RhoNpzDatasetMPPWrapper
 broken_paths = []
 # IF YOU ADD A NEW DSET MAKE SURE TO UPDATE THIS MAPPING SO MIXED DSET KNOWS HOW TO USE IT
 DSET_NAME_TO_OBJECT = {
@@ -28,6 +27,7 @@ DSET_NAME_TO_OBJECT = {
     'compNS': CompNSDataset,
     'pli_npz': PliNpzDataset,
     'cyl_npz': CylNpzDataset,
+    'lsc_npz_rho2rho': LscRho2RhoNpzDatasetMPPWrapper,
 }
 
 
@@ -112,6 +112,7 @@ class MixedDataset(Dataset):
                 'diffre2d': [4, 5],
                 'pli_npz': [0, 1, 2, 3, 4, 5, 6, 7],
                 'cyl_npz': [0, 1, 2, 3],
+                'lsc_npz_rho2rho': [0, 1, 2, 3, 4, 5, 6, 7],
             }
         elif self.use_all_fields:
             cur_max = 0
