@@ -3,14 +3,14 @@ basic_config: &basic_config
   log_to_wandb: !!bool False # Use wandb integration
   log_to_screen: !!bool True # Log progress to screen.
   save_checkpoint: !!bool True # Save checkpoints
-  checkpoint_save_interval: 20 # Save every # epochs - also saves "best" according to val loss
+  checkpoint_save_interval: 10 # Save every # epochs - also saves "best" according to val loss
   debug_grad: !!bool True # Compute gradient/step_sizes/ect for debugging
   true_time: !!bool False # Debugging setting - sets num workers to zero and activates syncs
-  num_data_workers: 6 # Generally pulling 8 cpu per process, so using 6 for DL - not sure if best ratio
+  num_data_workers: 16 # Generally pulling 8 cpu per process, so using 6 for DL - not sure if best ratio
   enable_amp: !!bool False # Use automatic mixed precision - blows up with low variance fields right now
   compile: !!bool False # Compile model - Does not currently work
   gradient_checkpointing: !!bool False # Whether to use gradient checkpointing - Slow, but lower memory
-  exp_dir: './mpp_runs/train_pli' # Output path
+  exp_dir: '/users/spandit/runs/mpp/train_pli' # Output path
   log_interval: 1 # How often to log - Don't think this is actually implemented
   pretrained: !!bool False # Whether to load a pretrained model
   # wandb settings
@@ -18,16 +18,16 @@ basic_config: &basic_config
   group: 'debugging'
   entity: 'entity'
   # Training settings
-  drop_path: 0.0  # SP-Revisit
+  drop_path: 0.1
   batch_size: 1
-  max_epochs: 3000
+  max_epochs: 2000
   scheduler_epochs: -1
   epoch_size: 1000 # Artificial epoch size
   rescale_gradients: !!bool False # Activate hook that scales block gradients to norm 1
   optimizer: 'adan' # adam, adan, whatever else i end up adding - adan did better on HP sweep
   scheduler: 'cosine' # Only cosine implemented
   warmup_steps: 1000 # Warmup when not using DAdapt
-  learning_rate: -1 # -1 means use DAdapt
+  learning_rate: -1  # -1 means use DAdapt
   weight_decay: 1e-4
   n_states: 12   # Number of state variables across the datasets - Can be larger than real number and things will just go unused
   state_names: ['Pressure', 'Vx', 'Vy', 'Density',  'Vx', 'Vy', 'Density', 'Pressure'] # Should be sorted
@@ -54,33 +54,31 @@ basic_config: &basic_config
   extended_names: !!bool False # Whether to use extended names - not currently implemented
   embedding_offset: 0  # Use when adding extra finetuning fields
   train_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
+              ['/users/spandit/data/lsc240420', 'lsc_npz_rho2rho', '/users/spandit/data/lsc240420_prefixes.txt'],
               ]
   valid_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
+              ['/users/spandit/data/lsc240420', 'lsc_npz_rho2rho', '/users/spandit/data/lsc240420_prefixes.txt'],
               ]
   append_datasets: [] # List of datasets to append to the input/output projections for finetuning
 
 
 finetune: &finetune
   <<: *basic_config
-  train_val_test: [.8, .1, .1]
-  accum_grad: 5
   pretrained: !!bool True
-  group: 'debugging'
-  pretrained_ckpt_path: './dummy_path'
+  append_datasets: ['lsc_npz_rho2rho'] # List of datasets to append to the input/output projections for finetuning
+  embedding_offset: 12 # Number of fields in original model
+  pretrained_ckpt_path: '../pretrained_weights/MPP_AViT_L.pt'
   train_data_paths: [
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
+              ['../data/pli_finetune_fp16_full/lsc240420_train', 'lsc_npz_rho2rho', ''],
               ]
-  valid_data_paths: [  # These are the same for all configs - uses split according to train_val_test
-              ['/lustre/scratch5/exempt/artimis/mpmm/spandit/finetune/lsc240420_fp16_full_direct_train', 'pli_npz', ''],
+  valid_data_paths: [
+              ['../data/pli_finetune_fp16_full/lsc240420_train', 'lsc_npz_rho2rho', ''],
               ]
-  embedding_offset: 12 # Number of fields in original model - FT fields start after this
   freeze_middle: !!bool False # Whether to freeze the middle layers of the model
   freeze_processor: !!bool False
-  append_datasets: ['pli_npz'] # List of datasets to append to the input/output projections for finetuning
 
-
+# Resume finetuning from the last finetune checkpoint (training_checkpoints/ckpt.tar) in the run directory.
+#  IMPORTANT: use the SAME --run_name as the prior finetune run so ckpt.tar exists and resuming=True.
 finetune_resume: &finetune_resume
   <<: *finetune
 
