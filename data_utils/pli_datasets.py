@@ -8,7 +8,7 @@ expt-kyle convention:
     start_img = image at timestep t-1
     end_img   = image at timestep t
     Dt        = 1 index timestep
-    half_image = False by default, i.e. full image via left-right reflection.
+    half_image = True or false. hardcoded
 """
 
 import os
@@ -21,18 +21,17 @@ import random
 from pathlib import Path
 from typing import Union
 
-'''
-IMAGE_WIDTH_HALF_IMAGE = 200
-IMAGE_WIDTH_FULL_IMAGE = 400
 
 PATCH_SIZE = 16
 IMAGE_HEIGHT_RAW = 1120
 IMAGE_HEIGHT_CROPPED = (IMAGE_HEIGHT_RAW // PATCH_SIZE) * PATCH_SIZE
 IMAGE_HEIGHT_PADDED  = ((IMAGE_HEIGHT_RAW // PATCH_SIZE) + 1) * PATCH_SIZE
-'''
 
-IMAGE_WIDTH = 400
-IMAGE_HEIGHT = 1120
+IMAGE_WIDTH_HALF_IMAGE = 400
+#IMAGE_WIDTH_FULL_IMAGE = 800
+
+IMAGE_WIDTH = IMAGE_WIDTH_HALF_IMAGE
+IMAGE_HEIGHT = IMAGE_HEIGHT_RAW
 
 
 class PliNpzDataset(Dataset):
@@ -88,14 +87,26 @@ class PliNpzDataset(Dataset):
 
     def __getitem__(self, idx: int):
         selected_fields = [
+            'density_case',
+            'energy_case',
+            'pressure_case',
+            'density_cushion',
+            'energy_cushion',
+            'pressure_cushion',
+            'density_maincharge',
+            'energy_maincharge',
+            'pressure_maincharge',
+            'density_outside_air',
+            'energy_outside_air',
+            'pressure_outside_air',
+            'density_striker',
+            'energy_striker',
+            'pressure_striker',
+            'density_throw',
+            'energy_throw',
+            'pressure_throw',
             'Uvelocity',
             'Wvelocity',
-            'density_case',
-            'density_cushion',
-            'density_maincharge',
-            'density_outside_air',
-            'density_striker',
-            'density_throw',
         ]
 
         def load_tensor(fpath):
@@ -176,14 +187,26 @@ class PliNpzDataset(Dataset):
         time_index = 0
         sample_index = None
         field_names = [
+            'density_case',
+            'energy_case',
+            'pressure_case',
+            'density_cushion',
+            'energy_cushion',
+            'pressure_cushion',
+            'density_maincharge',
+            'energy_maincharge',
+            'pressure_maincharge',
+            'density_outside_air',
+            'energy_outside_air',
+            'pressure_outside_air',
+            'density_striker',
+            'energy_striker',
+            'pressure_striker',
+            'density_throw',
+            'energy_throw',
+            'pressure_throw',
             'Uvelocity',
             'Wvelocity',
-            'density_case',
-            'density_cushion',
-            'density_maincharge',
-            'density_outside_air',
-            'density_striker',
-            'density_throw',
         ]
         type = 'pli_npz'
         split_level = 'sample'
@@ -198,7 +221,6 @@ class PliNpzDataset(Dataset):
 
     def get_per_file_dsets(self):
         return [self]
-
 
 
 def LSCread_npz_NaN(npz: np.lib.npyio.NpzFile, field: str) -> np.ndarray:
@@ -225,13 +247,33 @@ def volfrac_density(tmp_img: np.ndarray, npz_file: np.lib.npyio.NpzFile, hfield:
     return tmp_img * vofm
 
 
+def reflect_to_full_image(tmp_img: np.ndarray, hfield: str) -> np.ndarray:
+    """Reflect a half image across the R=0 symmetry axis.
+
+    Scalar fields are even under left-right reflection.
+
+    Uvelocity is the radial/R-direction velocity, so it is odd under
+    R reflection and must change sign on the reflected half.
+
+    Wvelocity is the axial/Z-direction velocity, so it is even under
+    this left-right reflection.
+    """
+    reflected = np.fliplr(tmp_img)
+
+    if hfield == "Uvelocity":
+        reflected = -reflected
+
+    return np.concatenate((reflected, tmp_img), axis=1)
+
+
 class LSC_rho2rho_temporal_DataSet(Dataset):
     """LSC/Loderunner-style temporal dataset returning (start_img, end_img, Dt).
 
     This follows the LSC channel/preprocessing semantics:
       - density channels first, velocity channels last
       - density_* channels are multiplied by matching vofm_* channels
-      - half_image=False reflects the image with np.concatenate((fliplr(img), img), axis=1)
+      - half_image=True uses the raw half image
+      - half_image=False constructs a reflected full image with shape [H, 2W],  with np.concatenate((fliplr(img), img), axis=1)
 
     For expt-kyle, set timeIDX_offset=1 and force_positive_offset=True.
     """
@@ -242,16 +284,28 @@ class LSC_rho2rho_temporal_DataSet(Dataset):
         file_prefix_list: Union[str, None] = None,
         max_timeIDX_offset: int = 1,
         max_file_checks: int = 100,
-        half_image: bool = False,
+        half_image: bool = True,
         hydro_fields: np.ndarray = np.array([
-            "density_case",
-            "density_cushion",
-            "density_maincharge",
-            "density_outside_air",
-            "density_striker",
-            "density_throw",
-            "Uvelocity",
-            "Wvelocity",
+            'density_case',
+            'energy_case',
+            'pressure_case',
+            'density_cushion',
+            'energy_cushion',
+            'pressure_cushion',
+            'density_maincharge',
+            'energy_maincharge',
+            'pressure_maincharge',
+            'density_outside_air',
+            'energy_outside_air',
+            'pressure_outside_air',
+            'density_striker',
+            'energy_striker',
+            'pressure_striker',
+            'density_throw',
+            'energy_throw',
+            'pressure_throw',
+            'Uvelocity',
+            'Wvelocity',
         ]),
         include_string: str = "",
         split: str = "train",
@@ -288,7 +342,15 @@ class LSC_rho2rho_temporal_DataSet(Dataset):
                 f"No valid LSC rho2rho pairs found in {self.LSC_NPZ_DIR} "
                 f"with include_string='{include_string}' and timeIDX_offset={self.timeIDX_offset}"
             )
-        self.valid_pairs = self._split_pairs(self.valid_pairs, split, train_val_test)
+
+        # If an explicit prefix-list file is provided, treat it as an already-split
+        # train/validation/test list and use all valid pairs from that list.
+        # Otherwise, preserve the original behavior and split discovered pairs.
+
+        #self.valid_pairs = self._split_pairs(self.valid_pairs, split, train_val_test)
+
+        if file_prefix_list is None:
+            self.valid_pairs = self._split_pairs(self.valid_pairs, split, train_val_test)
 
     @staticmethod
     def _discover_prefixes(root_dir: str, include_string: str = ""):
@@ -342,7 +404,7 @@ class LSC_rho2rho_temporal_DataSet(Dataset):
                 tmp_img = LSCread_npz_NaN(data_npz, str(hfield))
                 tmp_img = volfrac_density(tmp_img, data_npz, str(hfield))
                 if not self.half_image:
-                    tmp_img = np.concatenate((np.fliplr(tmp_img), tmp_img), axis=1)
+                    tmp_img = reflect_to_full_image(tmp_img, str(hfield))
                 img_list.append(tmp_img.astype(np.float32))
         return torch.tensor(np.stack(img_list, axis=0), dtype=torch.float32)
 
@@ -355,6 +417,7 @@ class LSC_rho2rho_temporal_DataSet(Dataset):
         # expt-kyle wants Dt=1 timestep. Keep this in index-timestep units.
         Dt = torch.tensor(float(dt_idx), dtype=torch.float32)
         return start_img, end_img, Dt
+
 
 class LscRho2RhoNpzDatasetMPPWrapper(Dataset):
     """MPP adapter for LSC_rho2rho_temporal_DataSet.
@@ -439,14 +502,26 @@ class LscRho2RhoNpzDatasetMPPWrapper(Dataset):
         time_index = 0
         sample_index = None
         field_names = [
-            "density_case",
-            "density_cushion",
-            "density_maincharge",
-            "density_outside_air",
-            "density_striker",
-            "density_throw",
-            "Uvelocity",
-            "Wvelocity",
+            'density_case',
+            'energy_case',
+            'pressure_case',
+            'density_cushion',
+            'energy_cushion',
+            'pressure_cushion',
+            'density_maincharge',
+            'energy_maincharge',
+            'pressure_maincharge',
+            'density_outside_air',
+            'energy_outside_air',
+            'pressure_outside_air',
+            'density_striker',
+            'energy_striker',
+            'pressure_striker',
+            'density_throw',
+            'energy_throw',
+            'pressure_throw',
+            'Uvelocity',
+            'Wvelocity',
         ]
         type = "lsc_npz_rho2rho"
         split_level = "sample"
@@ -457,4 +532,5 @@ class LscRho2RhoNpzDatasetMPPWrapper(Dataset):
 
     def _get_specific_bcs(self, f=None):
         return [0, 0]
+
 

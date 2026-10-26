@@ -110,9 +110,9 @@ class MixedDataset(Dataset):
                 'incompNS': [0, 1, 2],
                 'compNS': [0, 1, 2, 3],
                 'diffre2d': [4, 5],
-                'pli_npz': [0, 1, 2, 3, 4, 5, 6, 7],
+                'pli_npz': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ],
                 'cyl_npz': [0, 1, 2, 3],
-                'lsc_npz_rho2rho': [0, 1, 2, 3, 4, 5, 6, 7],
+                'lsc_npz_rho2rho': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ],
             }
         elif self.use_all_fields:
             cur_max = 0
